@@ -1,0 +1,122 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: chillspace-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: chillspace
+      POSTGRES_PASSWORD: chillspace
+      POSTGRES_DB: chillspace
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data_v16:/var/lib/postgresql/data
+      - ./postgres-init.sql:/docker-entrypoint-initdb.d/postgres-init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U chillspace -d chillspace"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 5s
+
+  redis:
+    image: redis:7-alpine
+    container_name: chillspace-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 3s
+
+  livekit:
+    image: livekit/livekit-server:latest
+    container_name: chillspace-livekit
+    restart: unless-stopped
+    command: ["--config", "/etc/livekit/livekit.yaml"]
+    volumes:
+      - ./livekit.yaml:/etc/livekit/livekit.yaml
+    ports:
+      - "7880:7880"
+      - "7881:7881"
+      - "7882:7882/udp"
+
+  realtime:
+    build:
+      context: ..
+      dockerfile: apps/realtime/Dockerfile
+    container_name: chillspace-realtime
+    restart: unless-stopped
+    env_file:
+      - .env.example
+    depends_on:
+      redis:
+        condition: service_healthy
+      livekit:
+        condition: service_started
+    ports:
+      - "4002:4002"
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:4002/health').then((r)=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  api:
+    build:
+      context: ..
+      dockerfile: apps/api/Dockerfile
+    container_name: chillspace-api
+    restart: unless-stopped
+    env_file:
+      - .env.example
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      realtime:
+        condition: service_healthy
+      livekit:
+        condition: service_started
+    ports:
+      - "4001:4001"
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:4001/health').then((r)=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  web:
+    build:
+      context: ..
+      dockerfile: apps/web/Dockerfile
+    container_name: chillspace-web
+    restart: unless-stopped
+    env_file:
+      - .env.example
+    depends_on:
+      api:
+        condition: service_healthy
+    ports:
+      - "3000:3000"
+
+volumes:
+  postgres_data_v16:

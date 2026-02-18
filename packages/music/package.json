@@ -1,0 +1,20 @@
+{
+  "name": "@chillspace/music",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "dist/music/src/index.js",
+  "types": "dist/music/src/index.d.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "echo 'no lint configured for @chillspace/music'",
+    "test": "echo 'no tests configured for @chillspace/music'"
+  },
+  "dependencies": {
+    "@chillspace/protocol": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3"
+  }
+}

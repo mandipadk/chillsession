@@ -1,0 +1,21 @@
+{
+  "name": "chillspace",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Chillspace: virtual study rooms with proximity chat, shared music, and mini-games",
+  "packageManager": "pnpm@9.15.0",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "pnpm -r --parallel --stream --if-present dev",
+    "build": "pnpm -r build",
+    "typecheck": "pnpm -r typecheck",
+    "lint": "pnpm -r lint",
+    "test": "pnpm -r test"
+  },
+  "devDependencies": {
+    "@types/node": "^24.9.1",
+    "typescript": "^5.9.3"
+  }
+}

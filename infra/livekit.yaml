@@ -1,0 +1,11 @@
+port: 7880
+bind_addresses:
+  - "0.0.0.0"
+rtc:
+  udp_port: 7882
+keys:
+  devkey: devsecret
+room:
+  auto_create: true
+logging:
+  level: info
