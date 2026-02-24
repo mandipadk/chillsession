@@ -41,7 +41,7 @@ Run all linters: `pnpm lint`
 ```sh
 pnpm typecheck    # tsc --noEmit across all packages
 pnpm build        # full production build (shared packages must build before apps)
-pnpm test         # no test suites configured yet — all packages echo no-op
+pnpm test         # runs vitest for @chillspace/protocol; other packages echo no-op
 ```
 
 ### Gotchas
