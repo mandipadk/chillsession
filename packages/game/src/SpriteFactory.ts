@@ -302,12 +302,22 @@ export function generateCharacterSpriteSheet(
   if (scene.textures.exists(key)) {
     scene.textures.remove(key);
   }
-  const img = new Image();
-  img.src = canvas.toDataURL();
-  scene.textures.addSpriteSheet(key, img, {
-    frameWidth: SPRITE_W,
-    frameHeight: SPRITE_H,
-  });
+
+  const texture = scene.textures.addCanvas(key, canvas)!;
+  let frameIndex = 0;
+  for (let dirIdx = 0; dirIdx < directions.length; dirIdx++) {
+    for (let frame = 0; frame < FRAME_COUNT; frame++) {
+      texture.add(
+        frameIndex,
+        0,
+        frame * SPRITE_W,
+        dirIdx * SPRITE_H,
+        SPRITE_W,
+        SPRITE_H,
+      );
+      frameIndex++;
+    }
+  }
 
   const dirNames = ["down", "left", "right", "up"];
   for (let dirIdx = 0; dirIdx < dirNames.length; dirIdx++) {
@@ -315,10 +325,10 @@ export function generateCharacterSpriteSheet(
     if (!scene.anims.exists(animKey)) {
       scene.anims.create({
         key: animKey,
-        frames: scene.anims.generateFrameNumbers(key, {
-          start: dirIdx * FRAME_COUNT,
-          end: dirIdx * FRAME_COUNT + FRAME_COUNT - 1,
-        }),
+        frames: Array.from({ length: FRAME_COUNT }, (_, i) => ({
+          key,
+          frame: dirIdx * FRAME_COUNT + i,
+        })),
         frameRate: 6,
         repeat: -1,
       });

@@ -419,16 +419,30 @@ export function renderWorld(scene: Phaser.Scene): void {
   const worldWidth = W * TILE;
   const worldHeight = H * TILE;
 
+  const bgCanvas = document.createElement("canvas");
+  bgCanvas.width = worldWidth;
+  bgCanvas.height = worldHeight;
+  const bgCtx = bgCanvas.getContext("2d")!;
+
+  const floorLightCanvas = scene.textures.get("tile_floor_light").getSourceImage() as HTMLCanvasElement;
+  const floorDarkCanvas = scene.textures.get("tile_floor_dark").getSourceImage() as HTMLCanvasElement;
+  const wallCanvas = scene.textures.get("tile_wall").getSourceImage() as HTMLCanvasElement;
+
   for (let ty = 0; ty < H; ty++) {
     for (let tx = 0; tx < W; tx++) {
+      const px = tx * TILE;
+      const py = ty * TILE;
       if (ty < 3) {
-        scene.add.image(tx * TILE + TILE / 2, ty * TILE + TILE / 2, "tile_wall").setDepth(-10);
+        bgCtx.drawImage(wallCanvas, px, py);
       } else {
-        const tileKey = (tx + ty) % 2 === 0 ? "tile_floor_light" : "tile_floor_dark";
-        scene.add.image(tx * TILE + TILE / 2, ty * TILE + TILE / 2, tileKey).setDepth(-10);
+        bgCtx.drawImage((tx + ty) % 2 === 0 ? floorLightCanvas : floorDarkCanvas, px, py);
       }
     }
   }
+
+  if (scene.textures.exists("world_bg")) scene.textures.remove("world_bg");
+  scene.textures.addCanvas("world_bg", bgCanvas);
+  scene.add.image(worldWidth / 2, worldHeight / 2, "world_bg").setDepth(-10);
 
   const layout = buildRoomLayout();
   for (const item of layout) {
@@ -457,10 +471,6 @@ export function renderWorld(scene: Phaser.Scene): void {
       .setOrigin(0.5, 1)
       .setDepth(10);
   }
-
-  const vignette = scene.add.graphics();
-  vignette.setScrollFactor(0);
-  vignette.setDepth(100);
 
   const vignetteCanvas = document.createElement("canvas");
   vignetteCanvas.width = 960;
