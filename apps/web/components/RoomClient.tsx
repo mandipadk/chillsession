@@ -458,9 +458,13 @@ export function RoomClient({ roomId, inviteToken }: RoomClientProps) {
     }
   };
 
-  const sendMoveInput = (input: MoveInput) => {
+  const sendMoveInput = useCallback((input: MoveInput) => {
     colyseusRef.current?.send("input.move", input);
-  };
+  }, []);
+
+  const handleInteract = useCallback((tableId: string) => {
+    colyseusRef.current?.send("chat.send", { body: `Interacting with ${tableId}` });
+  }, []);
 
   const sendChat = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -779,11 +783,9 @@ export function RoomClient({ roomId, inviteToken }: RoomClientProps) {
             selfAvatar={selfAvatar}
             avatars={ui.avatars}
             overlay={webcamOverlay}
-            onViewportResize={(width, height) => setViewportSize({ width, height })}
+            onViewportResize={useCallback((width: number, height: number) => setViewportSize({ width, height }), [])}
             onMoveInput={sendMoveInput}
-            onInteract={(tableId) => {
-              colyseusRef.current?.send("chat.send", { body: `Interacting with ${tableId}` });
-            }}
+            onInteract={handleInteract}
           />
 
           <p className="mt-2 font-mono text-xs text-slate-200">

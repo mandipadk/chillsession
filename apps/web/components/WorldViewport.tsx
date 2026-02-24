@@ -25,6 +25,11 @@ export function WorldViewport({
   const containerRef = useRef<HTMLDivElement | null>(null);
   const worldRef = useRef<ChillWorldHandle | null>(null);
 
+  const onMoveInputRef = useRef(onMoveInput);
+  onMoveInputRef.current = onMoveInput;
+  const onInteractRef = useRef(onInteract);
+  onInteractRef.current = onInteract;
+
   useEffect(() => {
     if (!containerRef.current) {
       return;
@@ -40,8 +45,8 @@ export function WorldViewport({
       worldRef.current = createChillWorld({
         container: containerRef.current,
         initialSelf: selfAvatar,
-        onMoveInput,
-        onInteract
+        onMoveInput: (input) => onMoveInputRef.current(input),
+        onInteract: (tableId) => onInteractRef.current(tableId)
       });
 
       worldRef.current.updateSelf(selfAvatar);
@@ -53,7 +58,9 @@ export function WorldViewport({
       worldRef.current?.destroy();
       worldRef.current = null;
     };
-  }, [selfAvatar.userId, onInteract, onMoveInput]);
+    // Only recreate the Phaser game when the user identity changes
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selfAvatar.userId]);
 
   useEffect(() => {
     worldRef.current?.updateSelf(selfAvatar);
