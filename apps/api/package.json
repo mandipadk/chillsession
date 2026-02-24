@@ -9,7 +9,7 @@
     "start": "tsx src/index.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "lint": "echo 'no lint configured for @chillspace/api'",
-    "test": "echo 'no tests configured for @chillspace/api'"
+    "test": "vitest run"
   },
   "dependencies": {
     "@chillspace/protocol": "workspace:*",
