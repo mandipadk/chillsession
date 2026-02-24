@@ -466,6 +466,10 @@ export function RoomClient({ roomId, inviteToken }: RoomClientProps) {
     colyseusRef.current?.send("chat.send", { body: `Interacting with ${tableId}` });
   }, []);
 
+  const handleViewportResize = useCallback((width: number, height: number) => {
+    setViewportSize({ width, height });
+  }, []);
+
   const sendChat = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!textInput.trim()) {
@@ -783,7 +787,7 @@ export function RoomClient({ roomId, inviteToken }: RoomClientProps) {
             selfAvatar={selfAvatar}
             avatars={ui.avatars}
             overlay={webcamOverlay}
-            onViewportResize={useCallback((width: number, height: number) => setViewportSize({ width, height }), [])}
+            onViewportResize={handleViewportResize}
             onMoveInput={sendMoveInput}
             onInteract={handleInteract}
           />
