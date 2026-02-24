@@ -9,7 +9,7 @@
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "lint": "echo 'no lint configured for @chillspace/music'",
-    "test": "echo 'no tests configured for @chillspace/music'"
+    "test": "vitest run"
   },
   "dependencies": {
     "@chillspace/protocol": "workspace:*"
