@@ -85,8 +85,12 @@ export function WorldViewport({
   }, [onViewportResize]);
 
   return (
-    <div ref={rootRef} className="relative h-[62vh] min-h-[420px] w-full overflow-hidden rounded-xl">
-      <div ref={containerRef} className="h-full w-full" />
+    <div
+      ref={rootRef}
+      className="relative h-[62vh] min-h-[420px] w-full overflow-hidden rounded-xl border border-[rgba(255,232,176,0.1)]"
+      style={{ background: "#1a1008" }}
+    >
+      <div ref={containerRef} className="h-full w-full" style={{ imageRendering: "pixelated" }} />
       <div className="pointer-events-none absolute inset-0 z-20">{overlay}</div>
     </div>
   );

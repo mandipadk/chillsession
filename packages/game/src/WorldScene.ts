@@ -1,6 +1,8 @@
 import * as Phaser from "phaser";
 import type { AvatarState, MoveInput } from "@chillspace/protocol";
 import { GAME_TABLES, WORLD_CONFIG } from "@chillspace/protocol";
+import { generateCharacterSpriteSheet, playWalkAnim, playIdleAnim } from "./SpriteFactory";
+import { generateWorldTextures, renderWorld } from "./TileRenderer";
 
 interface SceneData {
   self?: AvatarState;
@@ -8,11 +10,20 @@ interface SceneData {
   onInteract?: (tableId: string) => void;
 }
 
+interface RemoteAvatar {
+  sprite: Phaser.GameObjects.Sprite;
+  label: Phaser.GameObjects.Text;
+  textureKey: string;
+  lastX: number;
+  lastY: number;
+}
+
 export class WorldScene extends Phaser.Scene {
   private selfState!: AvatarState;
-  private selfSprite!: Phaser.GameObjects.Rectangle;
-  private remotes: Map<string, Phaser.GameObjects.Rectangle> = new Map();
-  private remoteLabels: Map<string, Phaser.GameObjects.Text> = new Map();
+  private selfSprite!: Phaser.GameObjects.Sprite;
+  private selfLabel!: Phaser.GameObjects.Text;
+  private selfTextureKey!: string;
+  private remotes: Map<string, RemoteAvatar> = new Map();
   private keys!: {
     up: Phaser.Input.Keyboard.Key;
     down: Phaser.Input.Keyboard.Key;
@@ -23,7 +34,7 @@ export class WorldScene extends Phaser.Scene {
   private onMoveInput: ((input: MoveInput) => void) | undefined;
   private onInteract: ((tableId: string) => void) | undefined;
   private lastInput: MoveInput = { up: false, down: false, left: false, right: false };
-  private debugText!: Phaser.GameObjects.Text;
+  private selfMoving = false;
 
   constructor() {
     super("world");
@@ -34,8 +45,8 @@ export class WorldScene extends Phaser.Scene {
       userId: "local-preview",
       name: "You",
       color: "#7dd3fc",
-      x: WORLD_CONFIG.tileSize * 2,
-      y: WORLD_CONFIG.tileSize * 2,
+      x: WORLD_CONFIG.tileSize * 8,
+      y: WORLD_CONFIG.tileSize * 8,
       dir: "down",
       webcamOn: false,
       role: "member"
@@ -49,42 +60,33 @@ export class WorldScene extends Phaser.Scene {
     this.cameras.main.setBounds(0, 0, worldWidth, worldHeight);
     this.physics?.world?.setBounds(0, 0, worldWidth, worldHeight);
 
-    const background = this.add.rectangle(
-      worldWidth / 2,
-      worldHeight / 2,
-      worldWidth,
-      worldHeight,
-      0x0f172a
-    );
-    background.setDepth(-100);
+    generateWorldTextures(this);
+    renderWorld(this);
 
-    this.drawGrid(worldWidth, worldHeight);
-    this.drawGameTables();
+    this.selfTextureKey = generateCharacterSpriteSheet(this, this.selfState.userId, this.selfState.color);
 
-    this.selfSprite = this.add.rectangle(
-      this.selfState.x,
-      this.selfState.y,
-      24,
-      24,
-      Number.parseInt(this.selfState.color.replace("#", "0x"), 16)
-    );
-    this.selfSprite.setStrokeStyle(2, 0xffffff);
+    this.selfSprite = this.add.sprite(this.selfState.x, this.selfState.y, this.selfTextureKey);
+    this.selfSprite.setScale(2);
+    this.selfSprite.setDepth(50);
+    playIdleAnim(this.selfSprite, this.selfTextureKey, this.selfState.dir);
 
-    const selfLabel = this.add.text(this.selfState.x - 20, this.selfState.y - 28, this.selfState.name, {
-      color: "#e2e8f0",
-      fontFamily: "monospace",
-      fontSize: "12px"
+    this.selfLabel = this.add.text(this.selfState.x, this.selfState.y - 22, this.selfState.name, {
+      fontFamily: '"Press Start 2P", monospace',
+      fontSize: "7px",
+      color: "#ffe8b0",
+      stroke: "#1a1008",
+      strokeThickness: 2,
     });
-    selfLabel.setName("selfLabel");
+    this.selfLabel.setOrigin(0.5, 1);
+    this.selfLabel.setDepth(51);
 
-    this.debugText = this.add.text(16, 16, "", {
-      color: "#93c5fd",
-      fontFamily: "monospace",
-      fontSize: "12px"
-    });
-    this.debugText.setScrollFactor(0);
+    const roleBadge = this.selfState.role === "host" ? " [HOST]" : this.selfState.role === "dj" ? " [DJ]" : "";
+    if (roleBadge) {
+      this.selfLabel.setText(this.selfState.name + roleBadge);
+    }
 
-    this.cameras.main.startFollow(this.selfSprite, true, 0.15, 0.15);
+    this.cameras.main.startFollow(this.selfSprite, true, 0.12, 0.12);
+    this.cameras.main.setZoom(1);
 
     this.keys = this.input.keyboard!.addKeys({
       up: Phaser.Input.Keyboard.KeyCodes.W,
@@ -140,8 +142,21 @@ export class WorldScene extends Phaser.Scene {
       this.onMoveInput?.(input);
     }
 
-    const selfLabel = this.children.getByName("selfLabel") as Phaser.GameObjects.Text;
-    selfLabel.setPosition(this.selfState.x - 20, this.selfState.y - 28);
+    const isMoving = input.up || input.down || input.left || input.right;
+    if (isMoving !== this.selfMoving) {
+      this.selfMoving = isMoving;
+      if (isMoving) {
+        playWalkAnim(this.selfSprite, this.selfTextureKey, this.selfState.dir);
+      } else {
+        playIdleAnim(this.selfSprite, this.selfTextureKey, this.selfState.dir);
+      }
+    }
+
+    if (isMoving) {
+      playWalkAnim(this.selfSprite, this.selfTextureKey, this.selfState.dir);
+    }
+
+    this.selfLabel.setPosition(this.selfState.x, this.selfState.y - 22);
 
     if (Phaser.Input.Keyboard.JustDown(this.keys.interact)) {
       const nearby = GAME_TABLES.find(
@@ -153,9 +168,24 @@ export class WorldScene extends Phaser.Scene {
       }
     }
 
-    this.debugText.setText(
-      `x:${this.selfState.x.toFixed(1)} y:${this.selfState.y.toFixed(1)} dir:${this.selfState.dir} remotes:${this.remotes.size}`
-    );
+    for (const [, remote] of this.remotes) {
+      const moving = remote.sprite.x !== remote.lastX || remote.sprite.y !== remote.lastY;
+      if (moving) {
+        const dx = remote.sprite.x - remote.lastX;
+        const dy = remote.sprite.y - remote.lastY;
+        let dir: AvatarState["dir"] = "down";
+        if (Math.abs(dx) > Math.abs(dy)) {
+          dir = dx > 0 ? "right" : "left";
+        } else {
+          dir = dy > 0 ? "down" : "up";
+        }
+        playWalkAnim(remote.sprite, remote.textureKey, dir);
+      } else {
+        playIdleAnim(remote.sprite, remote.textureKey, "down");
+      }
+      remote.lastX = remote.sprite.x;
+      remote.lastY = remote.sprite.y;
+    }
   }
 
   setSelfState(next: AvatarState): void {
@@ -166,13 +196,11 @@ export class WorldScene extends Phaser.Scene {
   setRemoteStates(nextAvatars: AvatarState[]): void {
     const nextIds = new Set(nextAvatars.filter((avatar) => avatar.userId !== this.selfState.userId).map((avatar) => avatar.userId));
 
-    for (const [userId, sprite] of this.remotes.entries()) {
+    for (const [userId, remote] of this.remotes.entries()) {
       if (!nextIds.has(userId)) {
-        sprite.destroy();
+        remote.sprite.destroy();
+        remote.label.destroy();
         this.remotes.delete(userId);
-        const label = this.remoteLabels.get(userId);
-        label?.destroy();
-        this.remoteLabels.delete(userId);
       }
     }
 
@@ -182,64 +210,33 @@ export class WorldScene extends Phaser.Scene {
         continue;
       }
 
-      let sprite = this.remotes.get(avatar.userId);
-      if (!sprite) {
-        sprite = this.add.rectangle(
-          avatar.x,
-          avatar.y,
-          24,
-          24,
-          Number.parseInt(avatar.color.replace("#", "0x"), 16)
-        );
-        sprite.setStrokeStyle(2, 0x94a3b8);
-        this.remotes.set(avatar.userId, sprite);
+      let remote = this.remotes.get(avatar.userId);
+      if (!remote) {
+        const textureKey = generateCharacterSpriteSheet(this, avatar.userId, avatar.color);
+        const sprite = this.add.sprite(avatar.x, avatar.y, textureKey);
+        sprite.setScale(2);
+        sprite.setDepth(50);
+        playIdleAnim(sprite, textureKey, avatar.dir);
 
-        const label = this.add.text(avatar.x - 20, avatar.y - 28, avatar.name, {
+        const label = this.add.text(avatar.x, avatar.y - 22, avatar.name, {
+          fontFamily: '"Press Start 2P", monospace',
+          fontSize: "6px",
           color: "#cbd5e1",
-          fontFamily: "monospace",
-          fontSize: "11px"
+          stroke: "#1a1008",
+          strokeThickness: 2,
         });
-        this.remoteLabels.set(avatar.userId, label);
+        label.setOrigin(0.5, 1);
+        label.setDepth(51);
+
+        remote = { sprite, label, textureKey, lastX: avatar.x, lastY: avatar.y };
+        this.remotes.set(avatar.userId, remote);
       }
 
-      sprite.setPosition(avatar.x, avatar.y);
+      remote.sprite.setPosition(avatar.x, avatar.y);
+      remote.label.setPosition(avatar.x, avatar.y - 22);
 
-      const label = this.remoteLabels.get(avatar.userId);
-      label?.setPosition(avatar.x - 20, avatar.y - 28);
-      label?.setText(avatar.webcamOn ? `${avatar.name} [cam]` : avatar.name);
-    }
-  }
-
-  private drawGrid(worldWidth: number, worldHeight: number): void {
-    const graphics = this.add.graphics();
-    graphics.lineStyle(1, 0x1e293b, 0.7);
-
-    for (let x = 0; x <= worldWidth; x += WORLD_CONFIG.tileSize) {
-      graphics.moveTo(x, 0);
-      graphics.lineTo(x, worldHeight);
-    }
-
-    for (let y = 0; y <= worldHeight; y += WORLD_CONFIG.tileSize) {
-      graphics.moveTo(0, y);
-      graphics.lineTo(worldWidth, y);
-    }
-
-    graphics.strokePath();
-  }
-
-  private drawGameTables(): void {
-    for (const table of GAME_TABLES) {
-      const x = table.x * WORLD_CONFIG.tileSize;
-      const y = table.y * WORLD_CONFIG.tileSize;
-
-      const tableSprite = this.add.rectangle(x, y, 52, 36, 0x334155);
-      tableSprite.setStrokeStyle(2, 0x64748b);
-
-      this.add.text(x - 24, y - 8, table.kind.toUpperCase(), {
-        color: "#f8fafc",
-        fontFamily: "monospace",
-        fontSize: "10px"
-      });
+      const webcamSuffix = avatar.webcamOn ? " [cam]" : "";
+      remote.label.setText(avatar.name + webcamSuffix);
     }
   }
 
@@ -248,10 +245,10 @@ export class WorldScene extends Phaser.Scene {
       coordinateSystem: "origin top-left, +x right, +y down",
       mode: "room",
       self: this.selfState,
-      remotes: Array.from(this.remotes.entries()).map(([userId, sprite]) => ({
+      remotes: Array.from(this.remotes.entries()).map(([userId, remote]) => ({
         userId,
-        x: sprite.x,
-        y: sprite.y
+        x: remote.sprite.x,
+        y: remote.sprite.y
       })),
       tables: GAME_TABLES,
       fullscreen: this.scale.isFullscreen
