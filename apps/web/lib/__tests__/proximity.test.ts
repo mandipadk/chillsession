@@ -70,16 +70,19 @@ describe("calculateProximity", () => {
     expect(result.pan).toBeGreaterThanOrEqual(-1);
   });
 
-  it("uses custom near and far radii", () => {
+  it("uses default near and far radii properly", () => {
     const tileSize = WORLD_CONFIG.tileSize;
+    const near = WORLD_CONFIG.nearVoiceRadiusTiles;
+    const far = WORLD_CONFIG.farVoiceRadiusTiles;
     const self = makeAvatar({ x: 0, y: 0 });
-    const other = makeAvatar({ userId: "u2", x: tileSize * 3, y: 0 });
 
-    const close = calculateProximity(self, other, 1, 5);
-    const farAway = calculateProximity(self, other, 1, 2);
+    const midDist = (near + far) / 2;
+    const mid = makeAvatar({ userId: "u2", x: tileSize * midDist, y: 0 });
+    const result = calculateProximity(self, mid);
 
-    expect(close.muted).toBe(false);
-    expect(farAway.muted).toBe(true);
+    expect(result.muted).toBe(false);
+    expect(result.gain).toBeGreaterThan(0);
+    expect(result.gain).toBeLessThan(1);
   });
 
   it("returns full gain within near radius", () => {

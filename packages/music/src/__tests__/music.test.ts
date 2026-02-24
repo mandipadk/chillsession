@@ -221,12 +221,12 @@ describe("provider-registry – createMusicProviders", () => {
       youtubeEnabled: true
     });
     expect(providers).toHaveLength(3);
-    expect(providers[0].source).toBe("licensed");
-    expect(providers[1].source).toBe("spotify");
-    expect(providers[2].source).toBe("youtube");
-    expect(providers[0].isEnabled()).toBe(true);
-    expect(providers[1].isEnabled()).toBe(false);
-    expect(providers[2].isEnabled()).toBe(true);
+    expect(providers[0]!.source).toBe("licensed");
+    expect(providers[1]!.source).toBe("spotify");
+    expect(providers[2]!.source).toBe("youtube");
+    expect(providers[0]!.isEnabled()).toBe(true);
+    expect(providers[1]!.isEnabled()).toBe(false);
+    expect(providers[2]!.isEnabled()).toBe(true);
   });
 });
 
