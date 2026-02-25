@@ -34,6 +34,7 @@ import { controlMusic, joinSession, moderate, queueMusic } from "../lib/api";
 import { calculateProximity } from "../lib/proximity";
 import type { GameStatePayload, RoomUIState, SessionJoinResponse } from "../lib/types";
 import { WorldViewport } from "./WorldViewport";
+import { PomodoroTimer } from "./PomodoroTimer";
 
 interface RoomClientProps {
   roomId: string;
@@ -129,6 +130,12 @@ export function RoomClient({ roomId, inviteToken }: RoomClientProps) {
   const [chessFrom, setChessFrom] = useState("e2");
   const [chessTo, setChessTo] = useState("e4");
   const [pictionaryGuess, setPictionaryGuess] = useState("");
+  const [pomodoroState, setPomodoroState] = useState<{
+    isRunning: boolean;
+    endsAtEpochMs: number;
+    durationMinutes: number;
+    startedBy: string;
+  }>({ isRunning: false, endsAtEpochMs: 0, durationMinutes: 0, startedBy: "" });
 
   const colyseusRef = useRef<ColyseusRoom | null>(null);
   const livekitRef = useRef<LiveKitRoom | null>(null);
@@ -284,6 +291,15 @@ export function RoomClient({ roomId, inviteToken }: RoomClientProps) {
             [payload.tableId]: payload
           }
         }));
+      });
+
+      room.onMessage("pomodoro.state", (payload: {
+        isRunning: boolean;
+        endsAtEpochMs: number;
+        durationMinutes: number;
+        startedBy: string;
+      }) => {
+        setPomodoroState(payload);
       });
 
       room.onLeave(() => {
@@ -468,6 +484,18 @@ export function RoomClient({ roomId, inviteToken }: RoomClientProps) {
 
   const handleViewportResize = useCallback((width: number, height: number) => {
     setViewportSize({ width, height });
+  }, []);
+
+  const sendEmote = useCallback((emote: string) => {
+    colyseusRef.current?.send("presence.emote", { emote });
+  }, []);
+
+  const startPomodoro = useCallback((durationMinutes: number) => {
+    colyseusRef.current?.send("pomodoro.start", { durationMinutes });
+  }, []);
+
+  const stopPomodoro = useCallback(() => {
+    colyseusRef.current?.send("pomodoro.stop", {});
   }, []);
 
   const sendChat = (event: FormEvent<HTMLFormElement>) => {
@@ -792,9 +820,23 @@ export function RoomClient({ roomId, inviteToken }: RoomClientProps) {
             onInteract={handleInteract}
           />
 
-          <p className="mt-2 font-mono text-xs text-slate-200">
-            Controls: WASD move, E interact, F fullscreen, Esc exit fullscreen. Voice radii near={WORLD_CONFIG.nearVoiceRadiusTiles} / far={WORLD_CONFIG.farVoiceRadiusTiles} tiles.
-          </p>
+          <div className="mt-2 flex items-center justify-between gap-2">
+            <p className="font-mono text-xs text-slate-200">
+              WASD move | E interact | 1-5 emotes | F fullscreen
+            </p>
+            <div className="flex gap-1">
+              {(["wave", "heart", "thumbsup", "coffee", "book"] as const).map((emote, i) => (
+                <button
+                  key={emote}
+                  onClick={() => sendEmote(emote)}
+                  className="rounded border border-white/10 bg-black/20 px-2 py-1 text-sm hover:bg-white/10"
+                  title={`${emote} (${i + 1})`}
+                >
+                  {emote === "wave" ? "👋" : emote === "heart" ? "❤️" : emote === "thumbsup" ? "👍" : emote === "coffee" ? "☕" : "📖"}
+                </button>
+              ))}
+            </div>
+          </div>
         </article>
 
         <aside className="flex flex-col gap-4">
@@ -893,6 +935,14 @@ export function RoomClient({ roomId, inviteToken }: RoomClientProps) {
               </div>
             </div>
           </section>
+          <PomodoroTimer
+            isRunning={pomodoroState.isRunning}
+            endsAtEpochMs={pomodoroState.endsAtEpochMs}
+            durationMinutes={pomodoroState.durationMinutes}
+            startedBy={pomodoroState.startedBy}
+            onStart={startPomodoro}
+            onStop={stopPomodoro}
+          />
         </aside>
       </section>
 

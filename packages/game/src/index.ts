@@ -75,3 +75,4 @@ export type * from "./types";
 export { WorldScene } from "./WorldScene";
 export { generateCharacterSpriteSheet, playWalkAnim, playIdleAnim } from "./SpriteFactory";
 export { generateWorldTextures, renderWorld, buildRoomLayout } from "./TileRenderer";
+export { createDustParticles, createFireParticles } from "./Particles";
