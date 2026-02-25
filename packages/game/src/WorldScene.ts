@@ -47,6 +47,7 @@ export class WorldScene extends Phaser.Scene {
   private lastInput: MoveInput = { up: false, down: false, left: false, right: false };
   private selfMoving = false;
   private minimapGraphics!: Phaser.GameObjects.Graphics;
+  private minimapDirty = true;
   private dayNightOverlay!: Phaser.GameObjects.Rectangle;
   private onEmote: ((emote: EmoteKind) => void) | undefined;
 
@@ -205,6 +206,7 @@ export class WorldScene extends Phaser.Scene {
     for (const [, remote] of this.remotes) {
       const moving = remote.sprite.x !== remote.lastX || remote.sprite.y !== remote.lastY;
       if (moving) {
+        this.minimapDirty = true;
         const dx = remote.sprite.x - remote.lastX;
         const dy = remote.sprite.y - remote.lastY;
         let dir: AvatarState["dir"] = "down";
@@ -273,6 +275,8 @@ export class WorldScene extends Phaser.Scene {
   }
 
   private drawMinimap(): void {
+    if (!this.minimapDirty) return;
+    this.minimapDirty = false;
     const g = this.minimapGraphics;
     g.clear();
 
@@ -313,6 +317,7 @@ export class WorldScene extends Phaser.Scene {
   setSelfState(next: AvatarState): void {
     this.selfState = next;
     this.selfSprite.setPosition(next.x, next.y);
+    this.minimapDirty = true;
   }
 
   setRemoteStates(nextAvatars: AvatarState[]): void {
@@ -323,6 +328,7 @@ export class WorldScene extends Phaser.Scene {
         remote.sprite.destroy();
         remote.label.destroy();
         this.remotes.delete(userId);
+        this.minimapDirty = true;
       }
     }
 
@@ -352,6 +358,7 @@ export class WorldScene extends Phaser.Scene {
 
         remote = { sprite, label, textureKey, lastX: avatar.x, lastY: avatar.y };
         this.remotes.set(avatar.userId, remote);
+        this.minimapDirty = true;
       }
 
       remote.sprite.setPosition(avatar.x, avatar.y);
