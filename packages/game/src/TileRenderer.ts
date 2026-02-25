@@ -437,8 +437,20 @@ function drawGameTable(ctx: CanvasRenderingContext2D, x: number, y: number, labe
   ctx.fillRect(x + 48, y + 38, 4, 8);
 }
 
+/**
+ * @deprecated Textures are now drawn directly onto the background canvas in renderWorld.
+ *             This function is kept for backwards compatibility and will be removed in a future release.
+ */
+let hasWarnedGenerateWorldTextures = false;
+
 export function generateWorldTextures(_scene: Phaser.Scene): void {
-  // Textures are drawn directly onto the background canvas now
+  if (!hasWarnedGenerateWorldTextures) {
+    console.warn(
+      "[TileRenderer] generateWorldTextures is deprecated and no longer needed; " +
+        "textures are now drawn directly onto the background canvas in renderWorld().",
+    );
+    hasWarnedGenerateWorldTextures = true;
+  }
 }
 
 export interface FurnitureItem {
