@@ -193,7 +193,7 @@ export class WorldScene extends Phaser.Scene {
 
     if (Phaser.Input.Keyboard.JustDown(this.keys.interact)) {
       const nearby = GAME_TABLES.find(
-        (table) => Phaser.Math.Distance.Between(this.selfState.x, this.selfState.y, table.x * 32, table.y * 32) < 48
+        (table) => Phaser.Math.Distance.Between(this.selfState.x, this.selfState.y, table.x * WORLD_CONFIG.tileSize, table.y * WORLD_CONFIG.tileSize) < 48
       );
       if (nearby) this.onInteract?.(nearby.tableId);
     }
