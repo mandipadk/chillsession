@@ -185,10 +185,6 @@ export class WorldScene extends Phaser.Scene {
       }
     }
 
-    if (isMoving) {
-      playWalkAnim(this.selfSprite, this.selfTextureKey, this.selfState.dir);
-    }
-
     this.selfLabel.setPosition(this.selfState.x, this.selfState.y - 22);
 
     if (Phaser.Input.Keyboard.JustDown(this.keys.interact)) {
