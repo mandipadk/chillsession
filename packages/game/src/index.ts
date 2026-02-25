@@ -9,7 +9,7 @@ export const createChillWorld = (config: ChillWorldConfig): ChillWorldHandle => 
     parent: config.container,
     width: config.width ?? 960,
     height: config.height ?? 640,
-    backgroundColor: "#0f172a",
+    backgroundColor: "#1a1008",
     scene: [],
     physics: {
       default: "arcade",
@@ -23,8 +23,12 @@ export const createChillWorld = (config: ChillWorldConfig): ChillWorldHandle => 
       forceSetTimeOut: true
     },
     render: {
-      pixelArt: false,
-      antialias: true
+      pixelArt: true,
+      antialias: false
+    },
+    scale: {
+      mode: Phaser.Scale.RESIZE,
+      autoCenter: Phaser.Scale.CENTER_BOTH
     }
   });
 
@@ -68,3 +72,7 @@ export const createChillWorld = (config: ChillWorldConfig): ChillWorldHandle => 
 };
 
 export type * from "./types";
+export { WorldScene } from "./WorldScene";
+export { generateCharacterSpriteSheet, playWalkAnim, playIdleAnim } from "./SpriteFactory";
+export { generateWorldTextures, renderWorld, buildRoomLayout } from "./TileRenderer";
+export { createDustParticles, createFireParticles } from "./Particles";

@@ -4,6 +4,8 @@ export const directionSchema = z.enum(["up", "down", "left", "right"]);
 export const roleSchema = z.enum(["host", "dj", "member"]);
 export const musicSourceSchema = z.enum(["licensed", "spotify", "youtube"]);
 export const gameKindSchema = z.enum(["chess", "ttt", "pictionary"]);
+export const emoteKindSchema = z.enum(["wave", "heart", "thumbsup", "coffee", "book"]);
+export const accessoryKindSchema = z.enum(["none", "headphones", "beanie", "glasses", "flower", "crown"]);
 export const moderationActionSchema = z.enum([
   "kick",
   "ban",

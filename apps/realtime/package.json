@@ -9,7 +9,7 @@
     "start": "tsx src/index.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "lint": "echo 'no lint configured for @chillspace/realtime'",
-    "test": "echo 'no tests configured for @chillspace/realtime'"
+    "test": "vitest run"
   },
   "dependencies": {
     "@chillspace/music": "workspace:*",

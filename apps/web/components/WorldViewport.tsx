@@ -25,6 +25,11 @@ export function WorldViewport({
   const containerRef = useRef<HTMLDivElement | null>(null);
   const worldRef = useRef<ChillWorldHandle | null>(null);
 
+  const onMoveInputRef = useRef(onMoveInput);
+  onMoveInputRef.current = onMoveInput;
+  const onInteractRef = useRef(onInteract);
+  onInteractRef.current = onInteract;
+
   useEffect(() => {
     if (!containerRef.current) {
       return;
@@ -40,8 +45,8 @@ export function WorldViewport({
       worldRef.current = createChillWorld({
         container: containerRef.current,
         initialSelf: selfAvatar,
-        onMoveInput,
-        onInteract
+        onMoveInput: (input) => onMoveInputRef.current(input),
+        onInteract: (tableId) => onInteractRef.current(tableId)
       });
 
       worldRef.current.updateSelf(selfAvatar);
@@ -53,7 +58,9 @@ export function WorldViewport({
       worldRef.current?.destroy();
       worldRef.current = null;
     };
-  }, [selfAvatar.userId, onInteract, onMoveInput]);
+    // Only recreate the Phaser game when the user identity changes
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selfAvatar.userId]);
 
   useEffect(() => {
     worldRef.current?.updateSelf(selfAvatar);
@@ -85,8 +92,12 @@ export function WorldViewport({
   }, [onViewportResize]);
 
   return (
-    <div ref={rootRef} className="relative h-[62vh] min-h-[420px] w-full overflow-hidden rounded-xl">
-      <div ref={containerRef} className="h-full w-full" />
+    <div
+      ref={rootRef}
+      className="relative h-[62vh] min-h-[420px] w-full overflow-hidden rounded-xl border border-[rgba(255,232,176,0.1)]"
+      style={{ background: "#1a1008" }}
+    >
+      <div ref={containerRef} className="h-full w-full" style={{ imageRendering: "pixelated" }} />
       <div className="pointer-events-none absolute inset-0 z-20">{overlay}</div>
     </div>
   );

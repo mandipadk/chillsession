@@ -2,6 +2,8 @@ export type Direction = "up" | "down" | "left" | "right";
 export type MusicSource = "licensed" | "spotify" | "youtube";
 export type Role = "host" | "dj" | "member";
 export type GameKind = "chess" | "ttt" | "pictionary";
+export type EmoteKind = "wave" | "heart" | "thumbsup" | "coffee" | "book";
+export type AccessoryKind = "none" | "headphones" | "beanie" | "glasses" | "flower" | "crown";
 
 export type ModerationActionType =
   | "kick"
@@ -19,6 +21,9 @@ export interface AvatarState {
   dir: Direction;
   webcamOn: boolean;
   role: Role;
+  accessory?: AccessoryKind;
+  emote?: EmoteKind;
+  emoteExpiresAt?: number;
 }
 
 export interface ChatMessage {
@@ -123,6 +128,10 @@ export interface ClientMessageMap {
   "music.control": MusicControlInput;
   "game.action": GameActionInput;
   "presence.webcamToggle": { webcamOn: boolean };
+  "presence.emote": { emote: EmoteKind };
+  "presence.accessory": { accessory: AccessoryKind };
+  "pomodoro.start": { durationMinutes: number };
+  "pomodoro.stop": Record<string, never>;
   "moderation.request": ModerationInput;
 }
 
@@ -149,6 +158,16 @@ export interface ServerMessageMap {
   "presence.event": {
     userId: string;
     webcamOn: boolean;
+  };
+  "presence.emoteEvent": {
+    userId: string;
+    emote: EmoteKind;
+  };
+  "pomodoro.state": {
+    isRunning: boolean;
+    endsAtEpochMs: number;
+    durationMinutes: number;
+    startedBy: string;
   };
 }
 
