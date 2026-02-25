@@ -567,16 +567,26 @@ export function renderWorld(scene: Phaser.Scene): void {
       .setDepth(10);
   }
 
+  const cam = scene.cameras.main;
+  const viewportWidth = cam.width;
+  const viewportHeight = cam.height;
+
   const vigCanvas = document.createElement("canvas");
-  vigCanvas.width = 960;
-  vigCanvas.height = 640;
+  vigCanvas.width = viewportWidth;
+  vigCanvas.height = viewportHeight;
   const vCtx = vigCanvas.getContext("2d")!;
-  const vGrad = vCtx.createRadialGradient(480, 320, 150, 480, 320, 520);
+
+  const centerX = viewportWidth / 2;
+  const centerY = viewportHeight / 2;
+  const innerRadius = 150 * (viewportWidth / 960);
+  const outerRadius = 520 * (Math.max(viewportWidth, viewportHeight) / 640);
+
+  const vGrad = vCtx.createRadialGradient(centerX, centerY, innerRadius, centerX, centerY, outerRadius);
   vGrad.addColorStop(0, "rgba(0,0,0,0)");
   vGrad.addColorStop(1, "rgba(0,0,0,0.35)");
   vCtx.fillStyle = vGrad;
-  vCtx.fillRect(0, 0, 960, 640);
+  vCtx.fillRect(0, 0, viewportWidth, viewportHeight);
   if (scene.textures.exists("vignette_overlay")) scene.textures.remove("vignette_overlay");
   scene.textures.addCanvas("vignette_overlay", vigCanvas);
-  scene.add.image(480, 320, "vignette_overlay").setScrollFactor(0).setDepth(100).setAlpha(0.5);
+  scene.add.image(centerX, centerY, "vignette_overlay").setScrollFactor(0).setDepth(100).setAlpha(0.5);
 }
