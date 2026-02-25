@@ -828,6 +828,8 @@ export function RoomClient({ roomId, inviteToken }: RoomClientProps) {
               {(["wave", "heart", "thumbsup", "coffee", "book"] as const).map((emote, i) => (
                 <button
                   key={emote}
+                  type="button"
+                  aria-label={`Send ${emote} emote`}
                   onClick={() => sendEmote(emote)}
                   className="rounded border border-white/10 bg-black/20 px-2 py-1 text-sm hover:bg-white/10"
                   title={`${emote} (${i + 1})`}
