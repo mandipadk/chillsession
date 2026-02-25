@@ -9,3 +9,4 @@ coverage
 .DS_Store
 *.log
 apps/web/.next
+package-lock.json
